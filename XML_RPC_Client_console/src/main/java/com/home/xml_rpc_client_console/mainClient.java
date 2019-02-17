@@ -30,8 +30,7 @@ public class mainClient {
             xrc.setTransportFactory(new XmlRpcCommonsTransportFactory(xrc));
             xrc.setConfig(xrcci);
             
-//            Vector paramsSay = new Vector();            
-//            paramsSay.addElement("pizda");
+
             Object[] params = new Object[]
               { new String("man"), new String("uiyuiyotv") };
             
