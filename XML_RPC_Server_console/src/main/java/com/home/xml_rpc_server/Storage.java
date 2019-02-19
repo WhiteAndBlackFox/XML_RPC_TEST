@@ -9,12 +9,15 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author vlad
  */
 public class Storage {
+    private static Logger log = Logger.getLogger(mainServer.class);
+    
 
     private static Storage instance = null;
     private List<jlists> mjlists = new LinkedList<jlists>();
@@ -35,6 +38,7 @@ public class Storage {
             id = mjlists.stream().map((m) -> m.getName()).collect(Collectors.toList()).indexOf(name);
         } catch (Exception ex) {
             ex.printStackTrace();
+            log.error(ex);
         }
         return id;
     }
@@ -48,6 +52,14 @@ public class Storage {
             mjlists.add(jl);
         }
     }
+    
+    public synchronized Boolean removeVal(Integer id, String val){
+        if(id != -1){
+            mjlists.get(id).removeJlistValue(val);
+            return true;
+        }
+        return false;
+    }
 
     public synchronized String getVal(String name) {
         ArrayList<String> al = null;
@@ -56,10 +68,12 @@ public class Storage {
             al = collect.get(0).getJlistValue();
         } catch (Exception ex) {
             ex.printStackTrace();
+            log.error(ex);
         }
         if (al != null) {
             return String.join("\n", al);
         }
-        return "слово отсутвует в словар";
+        return "слово отсутвует в словаре";
     }
+
 }
