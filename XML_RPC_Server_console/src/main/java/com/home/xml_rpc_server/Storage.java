@@ -16,8 +16,8 @@ import org.apache.log4j.Logger;
  * @author vlad
  */
 public class Storage {
+
     private static Logger log = Logger.getLogger(mainServer.class);
-    
 
     private static Storage instance = null;
     private List<jlists> mjlists = new LinkedList<jlists>();
@@ -43,6 +43,20 @@ public class Storage {
         return id;
     }
 
+    public synchronized String getList() {
+        String val = "";
+        try {
+            val = mjlists.stream().map((m) -> m.getName()).collect(Collectors.joining("\n"));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            log.error(ex);
+        }
+        if (!val.equals(""))
+            return val;
+        else
+            return "Список пустой";
+    }
+
     public synchronized void putVal(Integer id, String name, String val) {
         if (id != -1) {
             mjlists.get(id).addJlistValue(val);
@@ -52,9 +66,9 @@ public class Storage {
             mjlists.add(jl);
         }
     }
-    
-    public synchronized Boolean removeVal(Integer id, String val){
-        if(id != -1){
+
+    public synchronized Boolean removeVal(Integer id, String val) {
+        if (id != -1) {
             mjlists.get(id).removeJlistValue(val);
             return true;
         }

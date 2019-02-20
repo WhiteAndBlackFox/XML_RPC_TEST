@@ -35,6 +35,11 @@ public class Handler {
         String val = storage.getVal(name);
         return val;
     }
+    
+    public String list(){
+        String val = storage.getList();
+        return val;
+    }
 
     public String delete(String name, Object[] vals) {
         try {

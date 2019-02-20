@@ -5,9 +5,11 @@
  */
 package com.home.xml_rpc_client_console;
 
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -15,7 +17,9 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
@@ -26,10 +30,30 @@ import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
  * @author vlad
  */
 public class mainClient {
-    
+
     private static Logger log = Logger.getLogger(mainClient.class);
 
+    private static void updateLog4jConfiguration() {
+        Properties props = new Properties();
+        try (InputStream configStream = mainClient.class.getResourceAsStream("/default.properties")) {
+            props.load(configStream);
+        } catch (Exception e) {
+            System.out.println("Errornot laod configuration file ");
+        }
+        PropertyConfigurator.configure(props);
+    }
+
     private static void execToServer(String ip, String port, String cmd, String word, Object[] param) throws MalformedURLException, XmlRpcException {
+
+        URL propertiesUrl = mainClient.class.getResource("/log4j.properties");
+        if (propertiesUrl == null) {
+            //Hide no appender warning
+            Logger.getRootLogger().setLevel(Level.OFF);
+            log.info("Load default logger properties");
+            updateLog4jConfiguration();
+            log.info("Default logger properties are loaded");
+        }
+
         XmlRpcClientConfigImpl xrcci = new XmlRpcClientConfigImpl();
         xrcci.setServerURL(new URL(String.format("http://%s:%s", ip, port)));
         log.info(String.format("Подключение к htttp://%s:%s", ip, port));
@@ -43,14 +67,14 @@ public class mainClient {
         Object[] params = null;
 
         if (cmd.equals("get")) {
-            params = new Object[]{ word };
-        } else {
-            params = new Object[]{ word, param };
+            params = new Object[]{word};
+        } else if (!cmd.equals("list")) {
+            params = new Object[]{word, param};
         }
         log.info(String.format("Вызов %s", String.format("Handler.%s", cmd)));
         String result = (String) xrc.execute(String.format("Handler.%s", cmd), params);
         log.info(String.format("Результат %s", result));
-        System.out.println(result);
+        System.out.println(String.format("Результат: \n%s", result));
     }
 
     public static void main(String[] args) {
@@ -62,6 +86,7 @@ public class mainClient {
         options.addOption(Option.builder("a").hasArgs().desc("Adds the specified meanings of the word to the dictionary, while maintaining the old ones.").longOpt("add").build());
         options.addOption(Option.builder("g").hasArg().desc("Returns the meaning of the word, each word begins on a new line.").longOpt("get").build());
         options.addOption(Option.builder("d").hasArgs().desc("Removes the specified word meanings from the dictionary.").longOpt("delete").build());
+        options.addOption(Option.builder("l").desc("List of words already added.").longOpt("list").build());
 
         CommandLineParser parser = new DefaultParser();
 
@@ -118,9 +143,14 @@ public class mainClient {
                 }
                 param = al.toArray();
             }
-            
-            if(!cmd.equals(""))
+
+            if (cl.hasOption("l")) {
+                cmd = "list";
+            }
+
+            if (!cmd.equals("")) {
                 execToServer(ip, port, cmd, word, param);
+            }
 
         } catch (Exception ex) {
             log.error(ex);
